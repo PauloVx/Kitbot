@@ -1,0 +1,16 @@
+{
+  "name": "discord-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pv",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.5.1",
+    "opusscript": "0.0.7",
+    "ytdl-core": "^1.0.0"
+  }
+}
