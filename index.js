@@ -35,6 +35,8 @@ client.on('message', async message=>{
 		`pfp` - Will send you a link to your profile picture.\n\
 		`clear` `Number of messages` - will delete a given number of messages.\n\
 		`play` `Url` - Will play a song.\n\
+		`np` - Now Playing.\n\
+		`queue` - Song Queue.\n\
 		`stop` - Stops the song.\n\
 		`skip` - Skips the song.\n\
 		".replace("${prefix}", prefix))
@@ -101,6 +103,30 @@ client.on('message', async message=>{
 				logToConsole('\n');
 				return sendMessageToChannel(message, `**${song.title}** has been added to the queue!`);
 			}
+		break;
+
+		case 'np':
+			if(!serverQueue) return replyMessage(message, 'There\'s nothing playing right now!');
+			if(serverQueue.songs[0].artist === undefined) //Sometimes youtube doesn't give you the artist name so this will at least show the name of the channel.
+				sendMessageToChannel(message, `Now Playing: **${serverQueue.songs[0].title} - ${serverQueue.songs[0].channelname}**`)
+			else
+				sendMessageToChannel(message, `Now Playing: **${serverQueue.songs[0].title} - ${serverQueue.songs[0].artist}**`)
+			
+			if(!serverQueue.songs[1]) return sendMessageToChannel(message, 'There\'s no more songs in the queue!')
+			if(serverQueue.songs[1].artist === undefined) //Sometimes youtube doesn't give you the artist name so this will at least show the name of the channel.
+				sendMessageToChannel(message, `Next: **${serverQueue.songs[1].title} - ${serverQueue.songs[1].channelname}**`)
+			else
+				sendMessageToChannel(message, `Next: **${serverQueue.songs[1].title} - ${serverQueue.songs[1].artist}**`)
+		break;
+
+		case 'queue':
+			if(!serverQueue) return replyMessage(message, 'There\'s nothing playing right now!');
+			sendMessageToChannel(message, `
+			__**Song Queue**__
+${serverQueue.songs.map(song => `**- __${song.title}__**`).join('\n')}
+**Now Playing: - __${serverQueue.songs[0].title}__**
+			`);
+	
 		break;
 
 		case 'stop' :
