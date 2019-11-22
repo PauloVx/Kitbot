@@ -11,12 +11,12 @@ client.on('warn', console.warn);
 client.on('error', console.error);
 
 client.on('ready', () =>{
-	console.log('Sucessfully Logged In!')
-	console.log(`Logged in as ${client.user.tag}!\n`);
+	logToConsole('Sucessfully Logged In!')
+	logToConsole(`Logged in as ${client.user.tag}!\n`);
 });
 
 client.on('disconnect', () =>{
-	console.log(`${client.user.tag} has disconnected!`);
+	logToConsole(`${client.user.tag} has disconnected!`);
 });
 
 client.on('message', async message=>{
@@ -28,7 +28,7 @@ client.on('message', async message=>{
 	switch(args[0])
 	{
 		case 'help': //Help command
-			message.reply("Here's your help! \n\
+			replyMessage(message, "Here's your help! \n\
 		My command prefix is: `${prefix}`\n\
 		My commands are:\n\
 		`help` - Will send you this help message.\n\
@@ -41,8 +41,8 @@ client.on('message', async message=>{
 		break;
 
 		case 'pfp': //Pfp command
-			message.reply('Your Profile Picture URL: ')
-			message.channel.send(message.author.avatarURL);
+			replyMessage(message, 'Your Profile Picture URL: ')
+			sendMessageToChannel(message, message.author.avatarURL);
 		break;
 
 		case 'clear': //clear command
@@ -52,11 +52,11 @@ client.on('message', async message=>{
 		
 		case 'play' :
 			const voiceChannel = message.member.voiceChannel;
-			if(!voiceChannel) return message.reply('You need to be in a voice channel to play music!');
+			if(!voiceChannel) return replyMessage(message, 'You need to be in a voice channel to play music!');
 
 			const permissions = voiceChannel.permissionsFor(message.client.user);
-			if(!permissions.has('CONNECT')) return message.reply('I can\'t connect to your voice channel, make sure i have the proper permissions!');
-			if(!permissions.has('SPEAK')) return message.reply('I can\'t speak in your voice channel, make sure i have the proper permissions!');
+			if(!permissions.has('CONNECT')) return replyMessage(message, 'I can\'t connect to your voice channel, make sure i have the proper permissions!');
+			if(!permissions.has('SPEAK')) return replyMessage(message, 'I can\'t speak in your voice channel, make sure i have the proper permissions!');
 
 			const songInfo = await ytdl.getInfo(args[1]);
 			const song = {
@@ -96,28 +96,45 @@ client.on('message', async message=>{
 			else
 			{
 				serverQueue.songs.push(song);
-				console.log(`Queue: `);
-				console.log(serverQueue.songs);
-				console.log('\n');
-				return message.channel.send(`**${song.title}** has been added to the queue!`);
+				logToConsole(`Queue: `);
+				logToConsole(serverQueue.songs);
+				logToConsole('\n');
+				return sendMessageToChannel(message, `**${song.title}** has been added to the queue!`);
 			}
 		break;
 
 		case 'stop' :
-			if(!message.member.voiceChannel) return message.reply('You need to be in a voice channel to use this command!');
-			if(!serverQueue) return message.reply('There\'s nothing playing right now!');
+			if(!message.member.voiceChannel) return replyMessage(message, 'You need to be in a voice channel to use this command!');
+			if(!serverQueue) return replyMessage(message, 'There\'s nothing playing right now!');
 			serverQueue.songs = [];
 			serverQueue.connection.dispatcher.end();
-			console.log('Disconnected the voice channel!\n');
+			logToConsole('Disconnected the voice channel!\n');
 		break;
 
 		case 'skip' :
-			if(!message.member.voiceChannel) return message.reply('You need to be in a voice channel to use this command!');
-			if(!serverQueue) return message.reply('There\'s nothing playing right now!');
+			if(!message.member.voiceChannel) return replyMessage(message, 'You need to be in a voice channel to use this command!');
+			if(!serverQueue) return replyMessage(message, 'There\'s nothing playing right now!');
 			serverQueue.connection.dispatcher.end();
 		break;
 	}
 })
+
+//Sends a message to the text channel
+function sendMessageToChannel(message, msg) //message = the command, msg is the actual message.
+{
+	message.channel.send(msg);
+}
+
+//Replys to the user that sent the command
+function replyMessage(message, msg) //message = the command, msg is the actual message.
+{
+	message.reply(msg);
+}
+
+function logToConsole(msg) //Logs something to the console
+{
+	console.log(msg);
+}
 
 function play(guild, song)
 {
@@ -134,20 +151,20 @@ function play(guild, song)
 
 	dispatcher.on('start', () => 
 	{
-		console.log(`A song started playing!`);
-		console.log(song); //Logs the "song" object to the console.
+		logToConsole(`A song started playing!`);
+		logToConsole(song); //Logs the "song" object to the console.
 		if(song.artist === undefined) //Sometimes youtube doesn't give you the artist name so this will at least show the name of the channel.
-			serverQueue.textChannel.send(`Currently Playing: **${song.title} - ${song.channelname}**`)
+			serverQueue.textChannel.send(`Now Playing: **${song.title} - ${song.channelname}**`)
 		else
-			serverQueue.textChannel.send(`Currently Playing: **${song.title} - ${song.artist}**`)
+			serverQueue.textChannel.send(`Now Playing: **${song.title} - ${song.artist}**`)
 
-		console.log(`Queue: `);
-		console.log(serverQueue.songs);
+		logToConsole(`Queue: `);
+		logToConsole(serverQueue.songs);
 	})
 
 	dispatcher.on('end', () => 
 	{
-		console.log(`Finished playing ${song.title}!\n`);
+		logToConsole(`Finished playing ${song.title}!\n`);
 		serverQueue.songs.shift();
 		play(guild, serverQueue.songs[0]);
 	})
