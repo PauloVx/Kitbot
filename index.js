@@ -15,7 +15,6 @@ client.on('error', console.error);
 
 client.on('ready', () =>{
 	logToConsole('Sucessfully Logged In!')
-	logToConsole(ffmpeg.path, ffmpeg.version);
 	logToConsole(`Logged in as ${client.user.tag}!\n`);
 });
 
