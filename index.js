@@ -7,7 +7,6 @@ const YouTube = require('simple-youtube-api');
 const youtube = new YouTube(GOOGLE_API_KEY);
 
 const ytdl = require("ytdl-core") //Importing Ytdl-core
-const ffmpeg = require("@ffmpeg-installer/ffmpeg");
 
 const queue = new Map(); //Song Queue
 
