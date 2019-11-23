@@ -1,9 +1,13 @@
 const Discord = require('discord.js'); // Importing discord.js
 const client  = new Discord.Client(); // Create an instance of a Discord client
 
-const {token, prefix} = require('./config') //Importing the config file.
+const {token, prefix, GOOGLE_API_KEY} = require('./config') //Importing the config file.
+
+const YouTube = require('simple-youtube-api');
+const youtube = new YouTube(GOOGLE_API_KEY);
 
 const ytdl = require("ytdl-core") //Importing Ytdl-core
+const ffmpeg = require("@ffmpeg-installer/ffmpeg");
 
 const queue = new Map(); //Song Queue
 
@@ -12,6 +16,7 @@ client.on('error', console.error);
 
 client.on('ready', () =>{
 	logToConsole('Sucessfully Logged In!')
+	logToConsole(ffmpeg.path, ffmpeg.version);
 	logToConsole(`Logged in as ${client.user.tag}!\n`);
 });
 
@@ -22,7 +27,7 @@ client.on('disconnect', () =>{
 client.on('message', async message=>{
 	if(!message.content.startsWith(prefix)) return; //Will return if the message doesn't start with the correct prefix.
 	let args = message.content.substring(prefix.length).split(" ");
-	
+	const searchString = args.slice(1).join(' ');
 	const serverQueue = queue.get(message.guild.id);
 
 	switch(args[0])
@@ -34,7 +39,7 @@ client.on('message', async message=>{
 		`help` - Will send you this help message.\n\
 		`pfp` - Will send you a link to your profile picture.\n\
 		`clear` `Number of messages` - will delete a given number of messages.\n\
-		`play` `Url` - Will play a song.\n\
+		`play` `Name/Url` - Will play a song.\n\
 		`np` - Now Playing.\n\
 		`queue` - Song Queue.\n\
 		`stop` - Stops the song.\n\
@@ -60,12 +65,29 @@ client.on('message', async message=>{
 			if(!permissions.has('CONNECT')) return replyMessage(message, 'I can\'t connect to your voice channel, make sure i have the proper permissions!');
 			if(!permissions.has('SPEAK')) return replyMessage(message, 'I can\'t speak in your voice channel, make sure i have the proper permissions!');
 
-			const songInfo = await ytdl.getInfo(args[1]);
+			try
+			{
+				var video = await youtube.getVideo(args[1]); //args = url
+			}
+			catch (error)
+			{
+				try
+				{
+					var videos = await youtube.searchVideos(searchString, 1)
+					var video = await youtube.getVideoByID(videos[0].id);
+				}
+				catch (erro)
+				{
+					console.error(erro);
+					return sendMessageToChannel(message, 'I couldn\'t find any videos!');
+				}
+			}
+
 			const song = {
-				title: songInfo.title,
-				channelname: songInfo.author.name,
-				artist: songInfo.media.artist,
-				url: songInfo.video_url
+				id: video.id,
+				title: video.title,
+				channelname: video.channel.title,
+				url: `https://www.youtube.com/watch?v=${video.id}`
 			};
 
 			if(!serverQueue) 
@@ -107,16 +129,10 @@ client.on('message', async message=>{
 
 		case 'np':
 			if(!serverQueue) return replyMessage(message, 'There\'s nothing playing right now!');
-			if(serverQueue.songs[0].artist === undefined) //Sometimes youtube doesn't give you the artist name so this will at least show the name of the channel.
-				sendMessageToChannel(message, `Now Playing: **${serverQueue.songs[0].title} - ${serverQueue.songs[0].channelname}**`)
-			else
-				sendMessageToChannel(message, `Now Playing: **${serverQueue.songs[0].title} - ${serverQueue.songs[0].artist}**`)
+			sendMessageToChannel(message, `Now Playing: **${serverQueue.songs[0].title} - ${serverQueue.songs[0].channelname}**`)
 			
 			if(!serverQueue.songs[1]) return sendMessageToChannel(message, 'There\'s no more songs in the queue!')
-			if(serverQueue.songs[1].artist === undefined) //Sometimes youtube doesn't give you the artist name so this will at least show the name of the channel.
-				sendMessageToChannel(message, `Next: **${serverQueue.songs[1].title} - ${serverQueue.songs[1].channelname}**`)
-			else
-				sendMessageToChannel(message, `Next: **${serverQueue.songs[1].title} - ${serverQueue.songs[1].artist}**`)
+			sendMessageToChannel(message, `Next: **${serverQueue.songs[1].title} - ${serverQueue.songs[1].channelname}**`)
 		break;
 
 		case 'queue':
@@ -133,14 +149,14 @@ ${serverQueue.songs.map(song => `**- __${song.title}__**`).join('\n')}
 			if(!message.member.voiceChannel) return replyMessage(message, 'You need to be in a voice channel to use this command!');
 			if(!serverQueue) return replyMessage(message, 'There\'s nothing playing right now!');
 			serverQueue.songs = [];
-			serverQueue.connection.dispatcher.end();
+			serverQueue.connection.dispatcher.end('Stop Command has been used!');
 			logToConsole('Disconnected the voice channel!\n');
 		break;
 
 		case 'skip' :
 			if(!message.member.voiceChannel) return replyMessage(message, 'You need to be in a voice channel to use this command!');
 			if(!serverQueue) return replyMessage(message, 'There\'s nothing playing right now!');
-			serverQueue.connection.dispatcher.end();
+			serverQueue.connection.dispatcher.end('Skip Command has been used!');
 		break;
 	}
 })
@@ -179,18 +195,16 @@ function play(guild, song)
 	{
 		logToConsole(`A song started playing!`);
 		logToConsole(song); //Logs the "song" object to the console.
-		if(song.artist === undefined) //Sometimes youtube doesn't give you the artist name so this will at least show the name of the channel.
-			serverQueue.textChannel.send(`Now Playing: **${song.title} - ${song.channelname}**`)
-		else
-			serverQueue.textChannel.send(`Now Playing: **${song.title} - ${song.artist}**`)
+		serverQueue.textChannel.send(`Now Playing: **${song.title} - ${song.channelname}**`)
 
 		logToConsole(`Queue: `);
 		logToConsole(serverQueue.songs);
 	})
 
-	dispatcher.on('end', () => 
+	dispatcher.on('end', reason => 
 	{
-		logToConsole(`Finished playing ${song.title}!\n`);
+		logToConsole(`Finished playing ${song.title}!`);
+		logToConsole(`Reason: ${reason}\n`);
 		serverQueue.songs.shift();
 		play(guild, serverQueue.songs[0]);
 	})
