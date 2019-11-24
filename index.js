@@ -14,6 +14,7 @@ client.on('warn', console.warn);
 client.on('error', console.error);
 
 client.on('ready', () =>{
+	client.user.setStatus(`Use ${prefix}help for help.`, 'Made by PvXHorizon');
 	logToConsole('Sucessfully Logged In!')
 	logToConsole(`Logged in as ${client.user.tag}!\n`);
 });
