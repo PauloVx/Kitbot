@@ -1,11 +1,11 @@
 /*Config for kitbot*/
 
-//Token for the app to log into the bot.
-exports.token = 'NjQ1MDY2ODg3MTAwNjI5MDY1.Xc9Ljw.99WUdKT6T-xwqNL_j0KWtDmtoQY';
+//Heroku Specific Config Vars
+export const token = process.env.token;
+export const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+export const prefix = process.env.prefix;
 
-//Google Api Key
-exports.GOOGLE_API_KEY = 'AIzaSyBWEgGqvlaKFfJCPJJ8WYs45ZsPFl1j4eY';
-
-
-//Command prefix.
-exports.prefix = 'k!';
+//Debug Vars - Do not Make Public
+//export const token = 'VALUE';
+//export const GOOGLE_API_KEY = 'VALUE';
+//export const prefix = 'VALUE';

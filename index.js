@@ -14,7 +14,7 @@ client.on('warn', console.warn);
 client.on('error', console.error);
 
 client.on('ready', () =>{
-	client.user.setStatus(`Use ${prefix}help for help.`, 'Made by PvXHorizon');
+	client.user.setActivity(`Use ${prefix}help for help.`);
 	logToConsole('Sucessfully Logged In!')
 	logToConsole(`Logged in as ${client.user.tag}!\n`);
 });
@@ -57,6 +57,7 @@ client.on('message', async message=>{
 		break;
 		
 		case 'play' :
+			if(!args[1]) return replyMessage(message, 'You need to tell me what to play!');
 			const voiceChannel = message.member.voiceChannel;
 			if(!voiceChannel) return replyMessage(message, 'You need to be in a voice channel to play music!');
 
